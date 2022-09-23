@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+	
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Tools</title>
+		
+		<link rel="stylesheet" href="../Styles/MainPage.css">
+		<link rel="stylesheet" href="../FiraCode/fira_code.css">
+	</head>
+	
+	<body>
+		<p>Mode:</p>
+		<select name="Mode" id="FileMode">
+			<option value="FileToArray">File To Array</option>
+			<option value="ImageToArray">Image To Pixel Array(WIP)</option>
+		</select>
+		
+		<p>Options:</p>
+		<form id="Options">
+			<input type="checkbox" id="AddFileSize" value="AddFileSize">
+			<label for="AddFileSize"> Add File Size Constant</label><br>
+					
+			<input type="checkbox" id="UpperCaseHex" value="UpperCaseHex">
+			<label for="UpperCaseHex"> Uppercase Hexadecimal</label><br>
+					
+			<input type="range" min="1" max="64" value="8" step="1" style="width: 25%;" id="RowLength" value="RowLength">
+			<label id="RowLengthLabel" for="RowLength"> Row Length</label><br>
+		</form>
+		
+		<!--
+		<p id="EndiannessLabel">Array Type:</p>
+		<select id="EndiannessType" value="LE">
+			<option value="LE">Little Endian(Always Used In 8-Bits)</option>
+			<option value="BG">Big Endian(Useful To Use Casted <8-Bit Arrays)</option>
+		</select>
+		-->
+
+		<p id="ArrayTypeLabel">Array Type:</p>
+		<select id="ArrayType" value="1">
+			<option value="1">uint64_t</option>
+			<option value="2">uint32_t</option>
+			<option value="3">uint16_t</option>
+			<option value="4">uint8_t</option>
+			
+			<option value="5">int64_t</option>
+			<option value="6">int32_t</option>
+			<option value="7">int16_t</option>
+			<option value="8">int8_t</option>
+			
+			<option value="CUSTOM">Custom</option>
+		</select>
+		
+		<p id="CustomTypeLabel">Custom Type:</p>
+		<form id="CustomTypeForm">
+			<label for="CustomTypeSize">Size(In Bytes): </label>
+			<input type="text" id="CustomTypeSize" name="Size" pattern="[0-9]{4}">
+			<br>
+			<label for="CustomTypeName">Data Type Name: </label>
+			<input type="text" id="CustomTypeName" name="Name">
+		</form>
+		
+		<p>Select File(s):</p>
+		<input type="file" id="File" name="File" accept="*" multiple>
+		
+		<p id="Status">Status: Idle</p>
+		<button id="StartButton">Start</button>
+		
+		<p id="ResultsLabel" hidden>Results: </p><br>
+		<div id="ResultsDiv" hidden></div>
+		
+		<script type="text/javascript">
+			var Template = `%FILE_SIZE_CONST_PART%const %DATA_TYPE_NAME% Data[] = {%ARRAY%};\n`
+			
+			var FileMode = ""
+			var StatusElement = document.getElementById("Status")
+			
+			var Data = {
+				"DataType": {
+					"Size": 0,
+					"Name": ""
+				}
+			}
+			
+			function PrecisionRound(Number, Size) {
+				Size = Math.pow(10, Size)
+				return Math.round(Number * Size) / Size
+			}
+			
+			function Sleep(DelayMS) {
+				return new Promise(Resolve => setTimeout(Resolve, DelayMS));
+			}
+			
+			function SetStatus(Value) {
+				if (Value) {
+					StatusElement.innerHTML = "Status: " + String(Value)
+				} else {
+					StatusElement.innerHTML = "Status: Idle"
+				}
+			}
+			
+			function SetElementsHidden(Elements, Enabled) {
+				for (var Id of Elements) {
+					if (Enabled) {
+						document.getElementById(Id).removeAttribute("hidden")
+					} else {
+						document.getElementById(Id).setAttribute("hidden", "")
+					}
+				}
+			}
+			
+			function UpdateFileMode(NewMode) {
+				switch (NewMode) {
+				case "FileToArray": {
+					
+					break
+				}
+				case "ImageToArray": {
+					
+					break
+				}
+				}
+				FileMode = NewMode
+			}
+			
+			function UpdateDatatype(NewType) {
+				var Size = 0
+				var Name = ""
+				
+				SetElementsHidden(["CustomTypeForm", "CustomTypeLabel"], NewType == "CUSTOM")
+				
+				
+				switch (NewType) {
+				case "CUSTOM": {
+					Name = document.getElementById("CustomTypeName").value
+					Size = document.getElementById("CustomTypeSize").value
+					break
+				}
+				
+				default: {
+					var TypeId = parseInt(NewType) - 1
+					
+					Name = [
+						"uint64_t", "uint32_t", "uint16_t", "uint8_t",
+						"int64_t", "int32_t", "int16_t", "int8_t"
+					][TypeId]
+					Size = [
+						8, 4, 2, 1,
+						8, 4, 2, 1,
+					][TypeId]
+					break
+				}
+				}
+				console.log("Set Data Type \"" + String(Name) + "\" Size: " + String(Size))
+				Data.DataType.Size = Size
+				Data.DataType.Name = Name
+			}
+			
+			document.getElementById("FileMode").addEventListener("change", (Event) => {
+				UpdateFileMode(Event.target.value)
+			})
+			
+			
+			document.getElementById("CustomTypeForm").addEventListener("change", (Event) => {
+				UpdateDatatype(document.getElementById("ArrayType").value)
+			})
+			document.getElementById("ArrayType").addEventListener("change", (Event) => {
+				UpdateDatatype(document.getElementById("ArrayType").value)
+			})
+			
+			
+			document.getElementById("RowLength").addEventListener("input", (Event) => {
+				document.getElementById("RowLengthLabel").innerHTML = " Row Length: " + String(document.getElementById("RowLength").value)
+			})
+			
+			function ResolveLabels(FlagList, Char, String) {
+				var Matches = 0
+				var ResultString = String
+				do {
+					Matches = 0
+					for (var Key in FlagList) {
+						ResultString = ResultString.replace(Char + Key + Char, (X) => {
+							Matches++
+							return FlagList[Key]
+						})
+					}
+					
+				} while (Matches > 0)
+				return ResultString
+			}
+			
+			function ReverseString(String) {
+				var NewString = "";
+				for (var i = String.length - 1; i >= 0; i--) {
+					NewString += String[i];
+				}
+				return NewString;
+			}
+			
+			async function Run() {
+				var FileSelector = document.getElementById("File");
+				
+				var Wait = false
+				var File = null
+				var FReader = new FileReader();
+				FReader.onload = async function (e) {
+					var UpperCaseHex = document.getElementById("UpperCaseHex").checked
+					var FileSizeVar = document.getElementById("AddFileSize").checked
+					var RowLenght = document.getElementById("RowLength").value
+					
+					var ResultArrayBuffer = new Uint8Array(FReader.result)
+					var ResultSize = ResultArrayBuffer.length
+					
+					var Values = []
+					
+					console.log("File Buffer: ", ResultArrayBuffer, " Size: ", ResultSize)
+					
+					var Prefix = "0x"
+					var Separator = ', '
+					
+					// Make Literals Buffer
+					var StringBuffer = ""
+					var IntegerString = ""
+					for (var ByteIndex = 0; ByteIndex < ResultSize; ByteIndex++) {
+						
+						// Byte Literal
+						var Byte = ResultArrayBuffer[ByteIndex].toString(16).padStart(2, '0')
+						
+						// Put To Uppercase If Needed
+						Byte = UpperCaseHex ? Byte.toUpperCase() : Byte.toLowerCase()
+						
+						// Reverse Byte To Change Endianness If Needed
+						Byte = Data.DataType.Size > 1 ? ReverseString(Byte) : Byte
+						
+						
+						if (ByteIndex % Data.DataType.Size == 0 && ByteIndex != 0) {
+							// Change Endiannes If Needed
+							IntegerString = Data.DataType.Size > 1 ? ReverseString(StringBuffer) : StringBuffer
+							
+							IntegerString = Prefix + IntegerString + Separator
+							
+							Values.push(IntegerString)
+							StringBuffer = ""
+						}
+						
+						if (ByteIndex % 0x10000 == 0) {
+							SetStatus(`Array Progress: ${ String(PrecisionRound(((ByteIndex + 1) / ResultSize) * 100, 2)) }% File: ${ File.name }`)
+							await Sleep(1)
+						}
+						
+						StringBuffer += Byte
+					}
+					IntegerString = Data.DataType.Size > 1 ? ReverseString(StringBuffer) : StringBuffer
+					
+					Values.push(Prefix + IntegerString.padStart(Data.DataType.Size * 2, '0'))
+					SetStatus("Array Done!")
+					
+					var ArrayString = ""
+					for (var i = 0; i < Values.length; i++) {
+						if (i % RowLenght == 0) {
+							ArrayString += '\n\t'
+						}
+						ArrayString += Values[i]
+					}
+					ArrayString += "\n"
+
+					var Flags = {
+						"FILE_SIZE": ResultSize,
+						"FILE_SIZE_CONST": `size_t FileSize = %FILE_SIZE%`,
+						"DATA_TYPE_NAME": Data.DataType.Name,
+						"ARRAY": ArrayString,
+						"FILE_SIZE_CONST_PART": FileSizeVar ? `const %FILE_SIZE_CONST%;\n` : ""
+					}
+					
+					var ResultString = ResolveLabels(Flags, '%', Template)
+					
+					{
+						var ResultDiv = document.getElementById("ResultsDiv")
+						
+						var Name = document.createElement("p")
+						Name.innerHTML = File.name
+						
+						var TextArea = document.createElement("textarea")
+						TextArea.innerHTML = ResultString
+						TextArea.setAttribute("readonly", "true")
+						TextArea.style = `height: 250px; width: 100%; font-family: "Fira Code"; font-weight: 300;`
+
+						ResultDiv.appendChild(Name)
+						ResultDiv.appendChild(TextArea)
+					}
+					
+					SetElementsHidden(["ResultsLabel", "ResultsDiv"], true)
+					
+					Wait = false
+				};
+				for (File of FileSelector.files) {
+					Wait = true
+					SetStatus("Loading File " + File.name)
+					FReader.readAsArrayBuffer(File);
+					while (Wait) {
+						await Sleep(100)
+					}
+					console.log("Done File ", File)
+				}
+				if (FileSelector.files.length > 0) {
+					SetStatus("Done")
+					await Sleep(1000)
+					SetStatus()
+				}
+				else {
+					SetStatus("No Files!")
+					await Sleep(1000)
+					SetStatus()
+				}
+			}
+			
+			document.getElementById("StartButton").addEventListener("click", () => {
+				SetElementsHidden(["ResultsLabel", "ResultsDiv"], false)
+				
+				// Simple Way To Wipe Children
+				document.getElementById("ResultsDiv").innerHTML = ""
+				
+				Run()
+			})
+			
+			
+			// Initialize
+			{
+				UpdateDatatype(document.getElementById("ArrayType").value)
+				document.getElementById("RowLengthLabel").innerHTML = " Row Length: " + String(document.getElementById("RowLength").value)
+				var Mode = document.getElementById("FileMode").value
+				switch (Mode) {
+				case "FileToArray": {
+					//SetFileToArrayMode(true)
+				}
+				}
+				FileMode = Mode
+			}
+		</script>
+		
+		
+	</body>
+	
+</html>

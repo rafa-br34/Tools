@@ -1,0 +1,45 @@
+
+:root {
+	--BG_COLOR: rgb(30, 30, 30);
+	--TXT_COLOR: rgb(255, 255, 255);
+	--LNK_COLOR: rgb(200, 200, 255);
+	--BUTTON_BG: rgb(60, 60, 60);
+	--BORDER_COLOR: rgb(255, 255, 255);
+	--TXT_FONT: monospace;
+
+}
+
+.Centered {
+  margin: auto;
+  width: 50%;
+  text-align: center
+}
+
+textarea {
+	background: var(--BG_COLOR);
+	color: var(--TXT_COLOR);
+	border-block-style: revert
+}
+
+a {
+	color: var(--LNK_COLOR);
+}
+
+body {
+	background: var(--BG_COLOR);
+	color: var(--TXT_COLOR);
+	font-family: var(--TXT_FONT);
+}
+
+button {
+	border-style: solid;
+	background: var(--BUTTON_BG);
+	color: var(--TXT_COLOR);
+	border-color: var(--BORDER_COLOR);
+	border-width: 1px;
+}
+
+select {
+	color: var(--TXT_COLOR);
+  background: var(--BG_COLOR);
+}
