@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+	
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Grid Generator</title>
+		
+		<link rel="stylesheet" href="../Styles/MainPage.css">
+		<link rel="stylesheet" href="../FiraCode/fira_code.css">
+
+		<script src="../Libraries/FileSaver.js"></script>
+
+		<script src="https://www.lactame.com/lib/image-js/0.35.1/image-js.min.js"></script>
+	</head>
+	
+	<body>
+
+		
+		<p id="GridInfoLabel">Grid Options(Separate With ','):</p>
+		<form id="GridInfoForm">
+			<label for="ImageSize">Image Size: </label>
+			<input type="text" id="ImageSize" name="Size" value="128, 128"><br>
+
+			<label for="PixelSeparation">Grid Pixel Separation: </label>
+			<input type="text" id="PixelSeparation" name="Dist" value="8, 8"><br>
+
+			<label for="GridOffset">Grid Start Offset: </label>
+			<input type="text" id="GridOffset" name="Offset" value="0, 0"><br>
+
+			<label for="LineSize">Line Size: </label>
+			<input type="text" id="LineSize" name="LineSize" value="1, 1"><br>
+
+			<label for="GridColor">Grid Color: </label>
+			<input type="color" id="GridColor" name="Color" value="#ffffff"><br>
+		</form>
+
+		
+		<p id="PreviewLabel">Preview: </p><br>
+		<img id="PreviewImage" style="width: 100%; height: auto; image-rendering: pixelated;"></img>
+		
+		<script type="text/javascript">
+			function ParseCSV(StringValue) {
+				return StringValue.replace(/\s/g, '').split(',')
+			}
+			function ParseIntList(List) {
+				var NewList = {}
+				for (var i = 0; i < List.length; i++) {
+					NewList[i] = parseInt(List[i])
+				}
+				return NewList
+			}
+			function ParseArg(Text) {
+				return ParseIntList(ParseCSV(Text))
+			}
+
+			function HexToRGB(Text) {
+				var RGB = parseInt(Text.replace('#', ''), 16)
+				return [RGB >> 16, (RGB & 0x00FF00) >> 8, (RGB & 0x0000FF)]
+			}
+
+			function Update() {
+				console.log("Update")
+				var Size = ParseArg(document.getElementById("ImageSize").value)
+				var Separation = ParseArg(document.getElementById("PixelSeparation").value)
+				var Offset = ParseArg(document.getElementById("GridOffset").value)
+				var LineSize = ParseArg(document.getElementById("LineSize").value)
+				var Color = HexToRGB(document.getElementById("GridColor").value)
+
+				Offset[0] += Math.floor(LineSize[0])
+				Offset[1] += Math.floor(LineSize[1])
+
+				var Data = new Uint8Array(Size[0] * Size[1] * 4);
+
+				for (var Y = 0; Y < Size[1]; Y++) {
+					for (var X = 0; X < Size[0]; X++) {
+						var PixelAt = (4 * Size[0] * Y) + 4 * X
+
+						var ModX = (X + Offset[0]) % Separation[0]
+						var ModY = (Y + Offset[1]) % Separation[1]
+
+						if (ModX == 0) {
+							for (var RealOff = 0; RealOff < LineSize[0]; RealOff++) {
+								PixelAt = (4 * Size[0] * Y) + 4 * (X + RealOff)
+								Data[PixelAt] 		= Color[0]
+								Data[PixelAt + 1] 	= Color[1]
+								Data[PixelAt + 2] 	= Color[2]
+								Data[PixelAt + 3] 	= 255
+							}
+						}
+						
+						if (ModY == 0) {
+							for (var RealOff = 0; RealOff < LineSize[1]; RealOff++) {
+								PixelAt = (4 * Size[0] * (Y + RealOff)) + 4 * X
+								Data[PixelAt] 		= Color[0]
+								Data[PixelAt + 1] 	= Color[1]
+								Data[PixelAt + 2] 	= Color[2]
+								Data[PixelAt + 3] 	= 255
+							}
+						}
+
+					}
+					
+				}
+
+
+				var ResultImage = new IJS.Image(Size[0], Size[1], Data)
+				document.getElementById("PreviewImage").src = ResultImage.toDataURL()
+			}
+
+			document.getElementById("GridInfoForm").addEventListener("change", (Event) => {
+				Update()
+			})
+
+			Update()
+		</script>
+		
+		
+	</body>
+	
+</html>
