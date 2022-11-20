@@ -8,16 +8,140 @@
 		<link rel="stylesheet" href="Styles/MainPage.css">
 	</head>
 	<body>
-
-
+		<canvas id="BackgroundAnim"></canvas>
 		<h2 class="Centered">This page contains a list of tools I've made in JavaScript.</h1>
+	
 		<br>
 		<div class="Centered">
 			<a href="Tools/FileToArray.html"><span style="text-align:center">File To Array/List</span></a>
 			<br>
 			<a href="Tools/GridGenerator.html"><span style="text-align:center">Grid Generator</span></a>
 		</div>
-		
+		<script>
+			var Canvas = document.getElementById("BackgroundAnim")
+			var Canvas2D = Canvas.getContext("2d")
+			Canvas2D.imageSmoothingQuality = "high"
 
+			if (!window.requestAnimationFrame) {
+				window.requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+			}
+
+			const Width  = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
+			const Height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
+			Canvas.setAttribute("width", Width)
+			Canvas.setAttribute("height", Height)
+
+			function CreateNode() {
+				// Radius, X, Y, VelX, VelY, Lifetime
+				return [(Math.random() + 0.3) * 20, Math.random() * Width, Math.random() * Height, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 0]
+			}
+
+			var Nodes = []
+			var NodePopulation = 50;
+			var BestLifetime = 0
+
+			for (var i = 0; i < NodePopulation; i++) {
+				Nodes.push(CreateNode())
+			}
+			
+			
+			var TicksPerSecond = 100;
+			var TickDelayMS = (1 / TicksPerSecond) * 1000
+
+			var LastTime = 0, Delta = 0
+			function AnimationLoop(Time) {
+				Delta += Time - LastTime
+				while (Delta >= TickDelayMS) {
+					// Update
+					{
+						if (Nodes.length < NodePopulation) {
+							Nodes.push(CreateNode())
+						}
+						var NewLifetimeTarget = 0
+						for (var a = 0; a < Nodes.length; a++) {
+							var NodeA = Nodes[a]
+							/*
+							if (NodeA[1] - NodeA[0] > Width || NodeA[1] + NodeA[0] < 0) {
+								NodeA[3] *= -1
+								
+								//Nodes.splice(a, 1)
+								//continue
+							}
+							else if (NodeA[2] - NodeA[0] > Height || NodeA[2] + NodeA[0] < 0) {
+								NodeA[4] *= -1
+							}
+							*/
+							if (NodeA[1] - NodeA[0] > Width || NodeA[1] + NodeA[0] < 0 || NodeA[2] - NodeA[0] > Height || NodeA[2] + NodeA[0] < 0) {
+								Nodes.splice(a, 1)
+								continue
+							}
+
+							for (var b = 0; b < Nodes.length; b++) {
+								if (b == a) {
+									continue
+								}
+								var NodeB = Nodes[b]
+								let X1 = NodeA[1], X2 = NodeB[1],
+									Y1 = NodeA[2], Y2 = NodeB[2],
+									R1 = NodeA[0], R2 = NodeB[0],
+									VX1 = NodeA[3], VX2 = NodeB[3],
+									VY1 = NodeA[4], VY2 = NodeB[4] 
+								
+								if (Math.abs((X1 - X2) * (X1 - X2) + (Y1 - Y2) * (Y1 - Y2)) < (R1 + R2) * (R1 + R2)) {
+									//console.log(X1, Y1, X2, Y2, (R1 + R2) * (R1 + R2))
+									let Distance = Math.sqrt((X2 - X1) * (X2 - X1) + (Y2 - Y1) * (Y2 - Y1))
+									
+									let CollisionNormal = [(X2 - X1) / Distance, (Y2 - Y1) / Distance]
+									let Speed = (VX1 - VX2) * CollisionNormal[0] + (VY1 - VY2) * CollisionNormal[1];
+									if (Speed < 0) {
+										break;
+									}
+									let Impulse = 2 * Speed / (R1 + R2);
+
+									NodeA[3] -= (Impulse * R2 * CollisionNormal[0])
+									NodeA[4] -= (Impulse * R2 * CollisionNormal[1])
+									NodeB[3] += (Impulse * R1 * CollisionNormal[0])
+									NodeB[4] += (Impulse * R1 * CollisionNormal[1])
+								}
+							}
+
+							NodeA[1] += NodeA[3]
+							NodeA[2] += NodeA[4]
+							NodeA[5] += 1
+							if (NodeA[5] > NewLifetimeTarget) {
+								NewLifetimeTarget = NodeA[5]
+							}
+						}
+
+						if (BestLifetime > NewLifetimeTarget) {
+							BestLifetime--
+						}
+						else if (BestLifetime < NewLifetimeTarget) {
+							BestLifetime++
+						}
+					}
+
+					Delta -= TickDelayMS
+				}
+
+				
+				// Draw
+				Canvas2D.clearRect(0, 0, Width, Height);
+				for (var Node of Nodes) {
+					Canvas2D.beginPath();
+					Canvas2D.arc(Node[1], Node[2], Node[0], 0, 2 * Math.PI, false);
+					Canvas2D.fillStyle = `rgb(${(Node[5] / BestLifetime) * 78},78,78)`;
+					Canvas2D.fill();
+					Canvas2D.lineWidth = 5;
+					Canvas2D.strokeStyle = `rgb(${(Node[5] / BestLifetime) * 55},55,55)`;
+					Canvas2D.stroke();
+				}
+
+				LastTime = Time;
+				window.requestAnimationFrame(AnimationLoop)
+			}
+
+			window.requestAnimationFrame(AnimationLoop)
+		</script>
 	</body>
 </html>
