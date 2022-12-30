@@ -60,21 +60,19 @@
 						var NewLifetimeTarget = 0
 						for (var a = 0; a < Nodes.length; a++) {
 							var NodeA = Nodes[a]
-							/*
+							
 							if (NodeA[1] - NodeA[0] > Width || NodeA[1] + NodeA[0] < 0) {
 								NodeA[3] *= -1
-								
-								//Nodes.splice(a, 1)
-								//continue
 							}
 							else if (NodeA[2] - NodeA[0] > Height || NodeA[2] + NodeA[0] < 0) {
 								NodeA[4] *= -1
 							}
-							*/
+							/*
 							if (NodeA[1] - NodeA[0] > Width || NodeA[1] + NodeA[0] < 0 || NodeA[2] - NodeA[0] > Height || NodeA[2] + NodeA[0] < 0) {
 								Nodes.splice(a, 1)
 								continue
 							}
+							*/
 
 							for (var b = 0; b < Nodes.length; b++) {
 								if (b == a) {
