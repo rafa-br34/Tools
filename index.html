@@ -30,14 +30,34 @@
 			const Height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
 			Canvas.setAttribute("width", Width)
 			Canvas.setAttribute("height", Height)
+			var AverageWidthHeight = (Width + Height) / 2
 
 			function CreateNode() {
 				// Radius, X, Y, VelX, VelY, Lifetime
-				return [(Math.random() + 0.3) * 20, Math.random() * Width, Math.random() * Height, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, 0]
+				var X = (Math.random() - 0.5) * Width, Y = (Math.random() - 0.5) * Height
+				
+				if (X < 0) {
+					X -= Width
+				}
+				else {
+					X += Width
+				}
+
+				if (Y < 0) {
+					Y -= Height
+				}
+				else {
+					Y += Height
+				}
+				// Old Code
+				/*(Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8*/
+
+				// AverageWidthHeight Is Used To Correct Direction Errors, Otherwise A Ball Spawning On 0, 0 Would Go To 0.5, 0.5 Which May Not Be The Resolution
+				return [(Math.random() + 0.3) * 30, X, Y, (((Width / 2) - X) / AverageWidthHeight) * 3, (((Height / 2) - Y) / AverageWidthHeight) * 3, 0]
 			}
 
 			var Nodes = []
-			var NodePopulation = 50;
+			var NodePopulation = 90;
 			var BestLifetime = 0
 
 			for (var i = 0; i < NodePopulation; i++) {
@@ -45,16 +65,18 @@
 			}
 			
 			
-			var TicksPerSecond = 100;
+			var TicksPerSecond = 125;
 			var TickDelayMS = (1 / TicksPerSecond) * 1000
 
 			var LastTime = 0, Delta = 0
+			var Counter = 0
 			function AnimationLoop(Time) {
 				Delta += Time - LastTime
 				while (Delta >= TickDelayMS) {
+					Counter++
 					// Update
 					{
-						if (Nodes.length < NodePopulation) {
+						while (Nodes.length < NodePopulation) {
 							Nodes.push(CreateNode())
 						}
 						var NewLifetimeTarget = 0
@@ -69,7 +91,7 @@
 							}
 							*/
 
-							if (NodeA[1] - NodeA[0] > Width || NodeA[1] + NodeA[0] < 0 || NodeA[2] - NodeA[0] > Height || NodeA[2] + NodeA[0] < 0) {
+							if (NodeA[1] - NodeA[0] > Width * 2 || NodeA[1] + NodeA[0] < -(Width * 2) || NodeA[2] - NodeA[0] > Height * 2 || NodeA[2] + NodeA[0] < -(Height * 2)) {
 								Nodes.splice(a, 1)
 								continue
 							}
@@ -104,19 +126,25 @@
 								}
 							}
 
+							// Update Position With Velocity
 							NodeA[1] += NodeA[3]
 							NodeA[2] += NodeA[4]
-							NodeA[5] += 1
-							if (NodeA[5] > NewLifetimeTarget) {
-								NewLifetimeTarget = NodeA[5]
+							
+							// Update Lifetime If Node Is Visible
+							if (NodeA[1] - NodeA[0] < Width && NodeA[1] + NodeA[0] > 0 && NodeA[2] - NodeA[0] < Height && NodeA[2] + NodeA[0] > 0) {
+								NodeA[5] += 1
+								if (NodeA[5] > NewLifetimeTarget) {
+									NewLifetimeTarget = NodeA[5]
+								}
 							}
+							
 						}
 
 						if (BestLifetime > NewLifetimeTarget) {
-							BestLifetime--
+							BestLifetime -= Math.max((BestLifetime - NewLifetimeTarget) / 100, 1)
 						}
 						else if (BestLifetime < NewLifetimeTarget) {
-							BestLifetime++
+							BestLifetime += Math.max((NewLifetimeTarget - BestLifetime) / 100, 1)
 						}
 					}
 
