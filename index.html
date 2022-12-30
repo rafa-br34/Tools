@@ -33,7 +33,7 @@
 
 			function CreateNode() {
 				// Radius, X, Y, VelX, VelY, Lifetime
-				return [(Math.random() + 0.3) * 20, Math.random() * Width, Math.random() * Height, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 0]
+				return [(Math.random() + 0.3) * 20, Math.random() * Width, Math.random() * Height, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, 0]
 			}
 
 			var Nodes = []
@@ -60,19 +60,20 @@
 						var NewLifetimeTarget = 0
 						for (var a = 0; a < Nodes.length; a++) {
 							var NodeA = Nodes[a]
-							
+							/*
 							if (NodeA[1] - NodeA[0] > Width || NodeA[1] + NodeA[0] < 0) {
 								NodeA[3] *= -1
 							}
 							else if (NodeA[2] - NodeA[0] > Height || NodeA[2] + NodeA[0] < 0) {
 								NodeA[4] *= -1
 							}
-							/*
+							*/
+
 							if (NodeA[1] - NodeA[0] > Width || NodeA[1] + NodeA[0] < 0 || NodeA[2] - NodeA[0] > Height || NodeA[2] + NodeA[0] < 0) {
 								Nodes.splice(a, 1)
 								continue
 							}
-							*/
+							
 
 							for (var b = 0; b < Nodes.length; b++) {
 								if (b == a) {
