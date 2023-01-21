@@ -36,7 +36,6 @@ body {
 	background: var(--BG_COLOR);
 	color: var(--TXT_COLOR);
 	font-family: var(--TXT_FONT);
-	overflow: hidden;
 	margin: 0px 0px;
 }
 
