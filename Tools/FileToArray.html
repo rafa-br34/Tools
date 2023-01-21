@@ -10,7 +10,7 @@
 		<link rel="stylesheet" href="../FiraCode/fira_code.css">
 	</head>
 	
-	<body>
+	<body id="Body">
 		<p>Mode:</p>
 		<select name="Mode" id="FileMode">
 			<option value="FileToArray">File To Array</option>
@@ -75,7 +75,7 @@
 			
 			var FileMode = ""
 			var StatusElement = document.getElementById("Status")
-			
+			var BodyElement = document.getElementById("Body")
 			var Data = {
 				"DataType": {
 					"Size": 0,
@@ -200,10 +200,13 @@
 			
 			async function Run() {
 				var FileSelector = document.getElementById("File");
-				
+				var AllResults = []
+
+
 				var Wait = false
 				var File = null
 				var FReader = new FileReader();
+				// FReader Lambda
 				FReader.onload = async function (e) {
 					var UpperCaseHex = document.getElementById("UpperCaseHex").checked
 					var FileSizeVar = document.getElementById("AddFileSize").checked
@@ -273,27 +276,12 @@
 						"FILE_SIZE_CONST_PART": FileSizeVar ? `const %FILE_SIZE_CONST%;\n` : ""
 					}
 					
-					var ResultString = ResolveLabels(Flags, '%', Template)
-					
-					{
-						var ResultDiv = document.getElementById("ResultsDiv")
-						
-						var Name = document.createElement("p")
-						Name.innerHTML = File.name
-						
-						var TextArea = document.createElement("textarea")
-						TextArea.innerHTML = ResultString
-						TextArea.setAttribute("readonly", "true")
-						TextArea.style = `height: 250px; width: 100%; font-family: "Fira Code"; font-weight: 300;`
-
-						ResultDiv.appendChild(Name)
-						ResultDiv.appendChild(TextArea)
-					}
-					
-					SetElementsHidden(["ResultsLabel", "ResultsDiv"], true)
+					AllResults.push(ResolveLabels(Flags, '%', Template))
 					
 					Wait = false
 				};
+				// FReader Lambda End
+
 				for (File of FileSelector.files) {
 					Wait = true
 					SetStatus("Loading File " + File.name)
@@ -303,8 +291,25 @@
 					}
 					console.log("Done File ", File)
 				}
+
 				if (FileSelector.files.length > 0) {
-					SetStatus("Done")
+
+					for (var ResultString of AllResults) {
+						var ResultDiv = document.getElementById("ResultsDiv")
+							
+						var Name = document.createElement("p")
+						Name.innerHTML = File.name
+							
+						var TextArea = document.createElement("textarea")
+						TextArea.innerHTML = ResultString
+						TextArea.setAttribute("readonly", "true")
+						TextArea.style = `height: 250px; width: 90%; font-family: "Fira Code"; font-weight: 300;`
+
+						ResultDiv.appendChild(Name)
+						ResultDiv.appendChild(TextArea)
+					}
+					
+					SetStatus("Done, Creating File Elements...")
 					await Sleep(1000)
 					SetStatus()
 				}
@@ -313,14 +318,17 @@
 					await Sleep(1000)
 					SetStatus()
 				}
+				
+				SetElementsHidden(["ResultsLabel", "ResultsDiv"], true)
+				BodyElement.style.overflowY = "auto"
 			}
 			
 			document.getElementById("StartButton").addEventListener("click", () => {
+				BodyElement.style.overflowX = "hidden"
+				BodyElement.style.overflowY = "hidden"
 				SetElementsHidden(["ResultsLabel", "ResultsDiv"], false)
 				
-				// Simple Way To Wipe Children
 				document.getElementById("ResultsDiv").innerHTML = ""
-				
 				Run()
 			})
 			
